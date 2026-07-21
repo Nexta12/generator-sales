@@ -3,6 +3,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import FacebookPixel from '@/components/FacebookPixel';
 import NextTopLoader from 'nextjs-toploader';
+import WhatsAppButton from '@/components/WhatsAppButton';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.todaysgenerators.com'),
@@ -120,6 +121,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-800 font-sans antialiased">
         <NextTopLoader color="#eab308" height={3} showSpinner={false} />
         <FacebookPixel />
+        <WhatsAppButton />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}

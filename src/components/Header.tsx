@@ -36,6 +36,9 @@ export default function Header() {
 
   const navLinks = [
     { name: 'Products', href: '/products' },
+    { name: 'About Us', href: '/about' },
+    { name: 'Services', href: '/services' },
+    { name: 'Contact', href: '/contact' },
   ];
 
   // Helper to determine if link is active

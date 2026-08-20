@@ -22,38 +22,59 @@ export default function OrderForm({ price }: { price?: number }) {
     const quantity = "1";
 
     const web3FormsKey = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY || '';
+    const supportPhone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '2347030136756';
     
     try {
-      const response = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          access_key: web3FormsKey,
-          subject: "New Cash on Delivery Order - Today's Generators",
-          from_name: "Today's Generators Orders",
-          name: fullName,
-          phone: phone,
-          alt_phone: altPhone,
-          address: address,
-          quantity: quantity,
-          base_price: price,
-        }),
+      let submittedSuccessfully = false;
+
+      if (web3FormsKey) {
+        const response = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            access_key: web3FormsKey,
+            subject: "New Cash on Delivery Order - Today's Generators",
+            from_name: "Today's Generators Orders",
+            name: fullName,
+            phone: phone,
+            alt_phone: altPhone,
+            address: address,
+            quantity: quantity,
+            base_price: price,
+          }),
+        });
+
+        if (response.ok) {
+          submittedSuccessfully = true;
+        }
+      }
+
+      // Fire Facebook Pixel Purchase Event
+      fpixel.event('Purchase', {
+        currency: 'NGN',
+        value: (price || 185000) * parseInt(quantity as string || '1', 10),
+        content_name: 'Generator Order',
       });
 
-      if (response.ok) {
-        setSuccess(true);
-        // Fire Facebook Pixel Purchase Event
-        fpixel.event('Purchase', {
-          currency: 'NGN',
-          value: (price || 185000) * parseInt(quantity as string || '1', 10),
-          content_name: 'Generator Order',
-        });
-      } else {
-        alert('Something went wrong. Please try again or contact us via WhatsApp.');
+      // If Web3Forms key was missing or Web3Forms API failed, redirect to WhatsApp with order details
+      if (!submittedSuccessfully) {
+        const orderMsg = encodeURIComponent(
+          `*New Cash on Delivery Order*\n\n` +
+          `*Full Name:* ${fullName}\n` +
+          `*Phone:* ${phone}\n` +
+          `*Alt Phone:* ${altPhone}\n` +
+          `*Address:* ${address}\n` +
+          `*Price:* ₦${(price || 185000).toLocaleString()}`
+        );
+        if (typeof window !== 'undefined') {
+          window.open(`https://wa.me/${supportPhone}?text=${orderMsg}`, '_blank');
+        }
       }
+
+      setSuccess(true);
     } catch (err) {
       alert('Network error. Please check your connection and try again.');
     } finally {

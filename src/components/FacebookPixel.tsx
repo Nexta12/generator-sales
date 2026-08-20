@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import * as fpixel from '@/lib/fpixel';
@@ -8,8 +8,13 @@ import * as fpixel from '@/lib/fpixel';
 function FacebookPixelInstance() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     fpixel.pageview();
   }, [pathname, searchParams]);
 

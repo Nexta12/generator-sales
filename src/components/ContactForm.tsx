@@ -20,31 +20,51 @@ export default function ContactForm() {
     const message = formData.get('message');
 
     const web3FormsKey = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY || '';
+    const supportPhone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '2347030136756';
     
     try {
-      const response = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          access_key: web3FormsKey,
-          subject: `New Contact Form Submission: ${subject}`,
-          from_name: "Today's Generators Website",
-          name: fullName,
-          email: email,
-          phone: phone,
-          service_interest: serviceInterest,
-          message: message,
-        }),
-      });
+      let submittedSuccessfully = false;
 
-      if (response.ok) {
-        setSuccess(true);
-      } else {
-        alert('Something went wrong. Please try again later.');
+      if (web3FormsKey) {
+        const response = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            access_key: web3FormsKey,
+            subject: `New Contact Form Submission: ${subject}`,
+            from_name: "Today's Generators Website",
+            name: fullName,
+            email: email,
+            phone: phone,
+            service_interest: serviceInterest,
+            message: message,
+          }),
+        });
+
+        if (response.ok) {
+          submittedSuccessfully = true;
+        }
       }
+
+      if (!submittedSuccessfully) {
+        const msg = encodeURIComponent(
+          `*New Contact Message*\n\n` +
+          `*Name:* ${fullName}\n` +
+          `*Email:* ${email}\n` +
+          `*Phone:* ${phone}\n` +
+          `*Service Interest:* ${serviceInterest}\n` +
+          `*Subject:* ${subject}\n` +
+          `*Message:* ${message}`
+        );
+        if (typeof window !== 'undefined') {
+          window.open(`https://wa.me/${supportPhone}?text=${msg}`, '_blank');
+        }
+      }
+
+      setSuccess(true);
     } catch (err) {
       alert('Network error. Please check your connection and try again.');
     } finally {

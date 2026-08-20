@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-400 space-y-2">
         <p>© {new Date().getFullYear()} Today's Generators. All rights reserved. Payment strictly on delivery.</p>
         <p className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase">
-          Built by Z-code Technologies Ltd. 08085258229
+          Built by Z-code Technologies Ltd.
         </p>
       </div>
     </footer>

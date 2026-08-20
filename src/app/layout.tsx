@@ -85,7 +85,7 @@ export default function RootLayout({
         'logo': 'https://www.todaysgenerators.com/h-1.png',
         'image': 'https://www.todaysgenerators.com/h-1.png',
         'description': 'Sales, rentals, repairs, and servicing of all types of fairly used UK Perkins diesel generators, all across Nigeria. Secure cash on delivery orders.',
-        'telephone': '+234 810 680 0185',
+        'telephone': '+234 703 013 6756',
         'priceRange': '₦₦-₦₦₦₦₦₦',
         'address': {
           '@type': 'PostalAddress',

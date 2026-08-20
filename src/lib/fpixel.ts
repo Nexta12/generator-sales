@@ -1,4 +1,4 @@
-export const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || '';
+export const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || '2258699968298475';
 
 // https://developers.facebook.com/docs/meta-pixel/get-started
 export const pageview = () => {

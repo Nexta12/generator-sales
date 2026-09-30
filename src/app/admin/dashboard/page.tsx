@@ -30,7 +30,8 @@ import {
   ExternalLink,
   ChevronRight,
   Megaphone,
-  Menu
+  Menu,
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -58,7 +59,6 @@ export default function AdminDashboard() {
 
   // Stats States
   const [totalCount, setTotalCount] = useState(0);
-  const [avgPrice, setAvgPrice] = useState(0);
   const [premiumItem, setPremiumItem] = useState<Product | null>(null);
 
 
@@ -82,13 +82,8 @@ export default function AdminDashboard() {
   const [imageUrl, setImageUrl] = useState('');
   const [imageUrl2, setImageUrl2] = useState('');
   const [imageUrl3, setImageUrl3] = useState('');
-  const [originalPrice, setOriginalPrice] = useState('');
-  const [tagline, setTagline] = useState('');
-  const [catchphrase, setCatchphrase] = useState('');
   const [isHomepage, setIsHomepage] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<number | null>(null);
-  // Dynamic Specs
-  const [specs, setSpecs] = useState<{ key: string; value: string }[]>([]);
 
   // Auth Protection
   useEffect(() => {
@@ -146,12 +141,8 @@ export default function AdminDashboard() {
       if (dataErr) throw dataErr;
 
       if (data && data.length > 0) {
-        const total = data.length;
-        const sum = data.reduce((acc, p) => acc + p.price, 0);
-        setAvgPrice(sum / total);
         setPremiumItem(data[0] as Product);
       } else {
-        setAvgPrice(0);
         setPremiumItem(null);
       }
     } catch (err) {
@@ -377,11 +368,7 @@ export default function AdminDashboard() {
     setImageUrl('');
     setImageUrl2('');
     setImageUrl3('');
-    setOriginalPrice('');
-    setTagline('');
-    setCatchphrase('');
     setIsHomepage(false);
-    setSpecs([{ key: '', value: '' }]);
     setIsFormOpen(true);
   };
 
@@ -394,24 +381,7 @@ export default function AdminDashboard() {
     setImageUrl(product.image_url || '');
     setImageUrl2(product.details?._image2 || '');
     setImageUrl3(product.details?._image3 || '');
-    setOriginalPrice(product.details?._original_price || '');
-    setTagline(product.details?._tagline || '');
-    setCatchphrase(product.details?._catchphrase || '');
     setIsHomepage(product.details?._is_homepage === 'true');
-
-    // Load specs from details JSONB, ignoring internal keys starting with _
-    if (product.details && Object.keys(product.details).length > 0) {
-      const loadedSpecs = Object.entries(product.details)
-        .filter(([k]) => !k.startsWith('_'))
-        .map(([k, v]) => ({
-          key: k,
-          value: v as string,
-        }));
-      setSpecs(loadedSpecs.length > 0 ? loadedSpecs : [{ key: '', value: '' }]);
-    } else {
-      setSpecs([{ key: '', value: '' }]);
-    }
-
     setIsFormOpen(true);
   };
 
@@ -454,20 +424,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Specs helper functions
-  const addSpecField = () => {
-    setSpecs([...specs, { key: '', value: '' }]);
-  };
 
-  const removeSpecField = (index: number) => {
-    setSpecs(specs.filter((_, i) => i !== index));
-  };
-
-  const handleSpecChange = (index: number, field: 'key' | 'value', val: string) => {
-    const updated = [...specs];
-    updated[index][field] = val;
-    setSpecs(updated);
-  };
 
   // Delete product handler
   const handleDeleteProduct = async (productId: string) => {
@@ -495,22 +452,23 @@ export default function AdminDashboard() {
     e.preventDefault();
     setError('');
 
-    // Construct specifications object
-    const detailsJson: Record<string, string> = {};
-    specs.forEach((s) => {
-      const trimmedKey = s.key.trim();
-      const trimmedVal = s.value.trim();
-      if (trimmedKey && !trimmedKey.startsWith('_') && trimmedVal) {
-        detailsJson[trimmedKey] = trimmedVal;
-      }
-    });
-    
+    // Construct details object
+    const detailsJson: Record<string, string> = {
+      ...(editingProduct?.details || {}),
+    };
+    // remove obsolete keys if any
+    delete detailsJson['_original_price'];
+    delete detailsJson['_tagline'];
+    delete detailsJson['_catchphrase'];
+
     if (imageUrl2) detailsJson['_image2'] = imageUrl2;
+    else delete detailsJson['_image2'];
+
     if (imageUrl3) detailsJson['_image3'] = imageUrl3;
-    if (originalPrice) detailsJson['_original_price'] = originalPrice;
-    if (tagline) detailsJson['_tagline'] = tagline;
-    if (catchphrase) detailsJson['_catchphrase'] = catchphrase;
+    else delete detailsJson['_image3'];
+
     if (isHomepage) detailsJson['_is_homepage'] = 'true';
+    else delete detailsJson['_is_homepage'];
 
     const parsedPrice = parseFloat(price);
     if (isNaN(parsedPrice) || parsedPrice <= 0) {
@@ -582,8 +540,8 @@ export default function AdminDashboard() {
 
   // Stats Calculations
   const totalProducts = totalCount;
-  const averagePrice = avgPrice;
   const premiumProduct = premiumItem;
+  const featuredGenerator = products.find((p) => p.details?._is_homepage === 'true') || products[0];
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -774,39 +732,38 @@ export default function AdminDashboard() {
                 {/* Stat 1: Total Products */}
                 <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Inventory</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Generators</span>
                     <h3 className="text-2xl font-black text-slate-950 mt-1">{totalProducts}</h3>
-                    <p className="text-[10px] text-slate-500 mt-1">Listed products in shop</p>
+                    <p className="text-[10px] text-slate-500 mt-1">Listed in catalog</p>
                   </div>
                   <div className="h-12 w-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
                     <Package className="h-6 w-6" />
                   </div>
                 </div>
 
-                {/* Stat 2: Avg Price */}
+                {/* Stat 2: Featured Generator */}
                 <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Average Price</span>
-                    <h3 className="text-2xl font-black text-slate-950 mt-1">
-                      {process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '₦'}
-                      {new Intl.NumberFormat().format(averagePrice)}
+                  <div className="max-w-[70%]">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Featured Model</span>
+                    <h3 className="text-sm font-extrabold text-slate-900 mt-1 truncate">
+                      {featuredGenerator ? featuredGenerator.name : 'None'}
                     </h3>
-                    <p className="text-[10px] text-slate-500 mt-1">Average value of items</p>
+                    <p className="text-[10px] text-amber-600 font-bold mt-1">Live on homepage</p>
                   </div>
-                  <div className="h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm">
-                    <DollarSign className="h-6 w-6" />
+                  <div className="h-12 w-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm shrink-0">
+                    <Zap className="h-6 w-6" />
                   </div>
                 </div>
 
                 {/* Stat 3: Premium Item */}
                 <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex items-center justify-between">
                   <div className="max-w-[70%]">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Premium Product</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Highest Value</span>
                     <h3 className="text-sm font-extrabold text-slate-900 mt-1 truncate">
                       {premiumProduct ? premiumProduct.name : 'None'}
                     </h3>
-                    <p className="text-xs font-bold text-indigo-600 mt-0.5">
-                      {premiumProduct ? `${process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '₦'}${new Intl.NumberFormat().format(premiumProduct.price)}` : 'N/A'}
+                    <p className="text-xs font-bold text-amber-600 mt-0.5">
+                      {premiumProduct ? `${process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '₦'}${new Intl.NumberFormat('en-NG', { maximumFractionDigits: 0 }).format(premiumProduct.price)}` : 'N/A'}
                     </p>
                   </div>
                   <div className="h-12 w-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm shrink-0">
@@ -1366,7 +1323,7 @@ export default function AdminDashboard() {
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 p-4">
               <h3 className="text-sm font-bold text-slate-900">
-                {editingProduct ? `Edit: ${editingProduct.name}` : 'Add New Store Item'}
+                {editingProduct ? `Edit: ${editingProduct.name}` : 'Add New Generator'}
               </h3>
               <button
                 onClick={() => setIsFormOpen(false)}
@@ -1377,84 +1334,41 @@ export default function AdminDashboard() {
             </div>
 
             {/* Modal Body / Form */}
-            <form onSubmit={handleSaveProduct} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSaveProduct} className="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
               
               {/* Product Name */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Product Name *
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Generator Name *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Premium Leather Chelsea Boots"
+                  placeholder="e.g. 20kVA UK Perkins Silent Diesel Generator"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="block w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none transition-colors duration-300"
+                  className="block w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-colors duration-300 capitalize"
                 />
               </div>
 
               {/* Product Price */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                   Price ({process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '₦'}) *
                 </label>
                 <input
                   type="number"
                   step="0.01"
                   required
-                  placeholder="e.g. 150.00"
+                  placeholder="e.g. 3500000"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  className="block w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none transition-colors duration-300"
-                />
-              </div>
-
-              {/* Product Original Price */}
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Original Price / Compare At ({process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '₦'})
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="e.g. 250.00"
-                  value={originalPrice}
-                  onChange={(e) => setOriginalPrice(e.target.value)}
-                  className="block w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none transition-colors duration-300"
-                />
-              </div>
-
-              {/* Tagline */}
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Tagline (Small Bubble Text)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 🦠 For Pest Control Professionals"
-                  value={tagline}
-                  onChange={(e) => setTagline(e.target.value)}
-                  className="block w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none transition-colors duration-300"
-                />
-              </div>
-
-              {/* Catchphrase */}
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Catchphrase / Main Headline
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Eradicate Pests and Pathogens Fast."
-                  value={catchphrase}
-                  onChange={(e) => setCatchphrase(e.target.value)}
-                  className="block w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none transition-colors duration-300"
+                  className="block w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-colors duration-300"
                 />
               </div>
 
               {/* Set as Homepage */}
-              <div className="flex items-center gap-3 bg-amber-50 p-4 rounded-xl border border-amber-200 mt-4">
+              <div className="flex items-center gap-3 bg-amber-50 p-4 rounded-xl border border-amber-200">
                 <input
                   type="checkbox"
                   id="isHomepage"
@@ -1463,31 +1377,31 @@ export default function AdminDashboard() {
                   className="w-5 h-5 text-amber-600 rounded border-slate-300 focus:ring-amber-500"
                 />
                 <label htmlFor="isHomepage" className="text-sm font-bold text-amber-900 cursor-pointer">
-                  Set as Featured Homepage Product
+                  Set as Featured Homepage Generator
                   <span className="block text-xs font-normal text-amber-700 mt-0.5">
-                    This will replace the current product displayed on the main landing page.
+                    This will display as the primary generator on the main landing page.
                   </span>
                 </label>
               </div>
 
               {/* Product Description */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Description
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Generator Description & Specifications *
                 </label>
                 <textarea
-                  rows={3}
-                  placeholder="Tell customers about the product materials, sizing, or aesthetic details..."
+                  rows={10}
+                  placeholder={`Provide detailed generator specifications:`}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="block w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none transition-colors duration-300 resize-none"
+                  className="block w-full min-h-[220px] px-3.5 py-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-colors duration-300 resize-y leading-relaxed"
                 />
               </div>
 
               {/* Product Images */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Product Images (Up to 3)
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Generator Images (Up to 3)
                 </label>
                 <div className="flex flex-col gap-4">
                   {[
@@ -1503,11 +1417,11 @@ export default function AdminDashboard() {
                           placeholder="Paste Image URL or upload one"
                           value={imgData.val}
                           onChange={(e) => imgData.set(e.target.value)}
-                          className="flex-grow px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none transition-colors duration-300"
+                          className="flex-grow px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-colors duration-300"
                         />
-                        <label className="cursor-pointer flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50/20 transition-all shrink-0">
+                        <label className="cursor-pointer flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600 hover:text-amber-600 hover:border-amber-200 hover:bg-amber-50/20 transition-all shrink-0">
                           {uploadingImage === imgData.num ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin text-amber-600" />
                           ) : (
                             <Upload className="h-4 w-4" />
                           )}
@@ -1539,55 +1453,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Specifications / Attributes */}
-              <div className="border-t border-slate-100 pt-4">
-                <div className="flex justify-between items-center mb-2.5">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Additional Attributes (Specifications)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={addSpecField}
-                    className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 hover:underline uppercase"
-                  >
-                    + Add Attribute
-                  </button>
-                </div>
-                
-                <div className="space-y-2">
-                  {specs.map((spec, i) => (
-                    <div key={i} className="flex gap-2 items-center animate-fade-in">
-                      <input
-                        type="text"
-                        placeholder="Label (e.g. Size)"
-                        value={spec.key}
-                        onChange={(e) => handleSpecChange(i, 'key', e.target.value)}
-                        className="w-1/3 px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Value (e.g. XL, L or 42, 43)"
-                        value={spec.value}
-                        onChange={(e) => handleSpecChange(i, 'value', e.target.value)}
-                        className="flex-grow px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none"
-                      />
-                      {specs.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeSpecField(i)}
-                          className="text-slate-400 hover:text-red-500 p-1 hover:bg-slate-50 rounded-lg"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <p className="text-[10px] text-slate-400 leading-relaxed italic">
-                    Tip: Separate multiple options with commas (e.g. "M, L, XL") to let customers select them in the order form.
-                  </p>
-                </div>
-              </div>
-
               {/* Submit Buttons */}
               <div className="border-t border-slate-100 pt-4 flex justify-end gap-2.5">
                 <button
@@ -1600,7 +1465,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={loading || uploadingImage !== null}
-                  className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 transition-all shadow-md shadow-indigo-100"
+                  className="flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 px-5 py-2.5 text-xs font-bold text-white disabled:bg-slate-300 disabled:text-slate-500 transition-all shadow-md shadow-amber-200"
                 >
                   {loading ? (
                     <>
@@ -1608,7 +1473,7 @@ export default function AdminDashboard() {
                       Saving...
                     </>
                   ) : (
-                    'Save Product'
+                    'Save Generator'
                   )}
                 </button>
               </div>

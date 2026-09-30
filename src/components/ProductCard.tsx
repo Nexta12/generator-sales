@@ -1,7 +1,7 @@
 'use client';
 
 import { Product } from '@/types';
-import { Tag, Sparkles } from 'lucide-react';
+import { Truck } from 'lucide-react';
 import Link from 'next/link';
 
 interface ProductCardProps {
@@ -10,15 +10,6 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const currencySymbol = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '₦';
-
-  // Check if product is less than 7 days old
-  const isNew = (() => {
-    if (!product.created_at) return false;
-    const createdDate = new Date(product.created_at);
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    return createdDate > oneWeekAgo;
-  })();
 
   // Format price with commas
   const formattedPrice = new Intl.NumberFormat().format(product.price);
@@ -40,31 +31,32 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center text-slate-400 gap-2">
-            <Sparkles className="h-8 w-8 text-slate-355 group-hover:text-yellow-500 transition-colors" />
             <span className="text-[10px] uppercase tracking-widest font-bold">No Image</span>
-          </div>
-        )}
-        
-        {/* Floating New Tag */}
-        {isNew && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-lg bg-amber-100 border border-amber-200 px-2.5 py-1 text-[10px] font-black tracking-wider uppercase text-amber-700 shadow-sm">
-            <Tag className="h-3 w-3" />
-            <span>New</span>
           </div>
         )}
       </div>
 
       {/* Info Section */}
       <div className="mt-5 flex flex-col flex-grow">
+        {/* Product Name */}
         <h3 className="font-sans text-base font-black text-slate-900 group-hover:text-amber-600 transition-colors duration-300 line-clamp-1">
           {product.name}
         </h3>
         
+        {/* Product Description */}
         <p className="mt-1 text-xs text-slate-500 line-clamp-2 flex-grow leading-relaxed">
           {product.description || 'No description available.'}
         </p>
 
-        {/* Bottom Section */}
+        {/* Payment Validates Order */}
+        <div className="mt-3">
+          <span className="inline-flex items-center gap-1.5 text-emerald-800 bg-emerald-50 border border-emerald-200 text-[11px] font-bold px-2.5 py-1 rounded-lg">
+            <Truck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            Payment Validates Order
+          </span>
+        </div>
+
+        {/* Bottom Section: Product Price */}
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
@@ -75,9 +67,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
           
-          <button className="rounded-xl bg-yellow-400 px-4 py-2.5 text-xs font-black text-slate-950 group-hover:bg-yellow-500 transition-all duration-300 shadow-sm cursor-pointer">
-            Order Now
-          </button>
+          <span className="rounded-xl bg-yellow-400 px-4 py-2.5 text-xs font-black text-slate-950 group-hover:bg-yellow-500 transition-all duration-300 shadow-sm">
+            View Details
+          </span>
         </div>
       </div>
     </Link>

@@ -1,259 +1,123 @@
 'use client';
 
-import { ArrowRight, CheckCircle2, ShieldCheck, Truck, Zap, Flame, Award } from 'lucide-react';
-import FakeSalesNotification from '@/components/FakeSalesNotification';
-import CountdownTimer from '@/components/CountdownTimer';
+import { useState } from 'react';
+import { Truck } from 'lucide-react';
 import OrderForm from '@/components/OrderForm';
 import Footer from '@/components/Footer';
 import { Product } from '@/types';
 
 export default function ProductClient({ product }: { product: Product }) {
-  // Use price if available, otherwise fallback to a generic formatting
+  // Format price
   const priceDisplay = product.price 
     ? new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(product.price)
     : '₦185,000';
-    
-  // Format the promo price (original price) slightly higher
-  const originalPriceDisplay = product.details?._original_price
-    ? new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(product.details._original_price))
-    : product.price
-      ? new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Math.floor(product.price * 1.35))
-      : '₦250,000';
 
-  const tagline = product.details?._tagline || '⚙️ Premium Fairly Used Generators';
-  const catchphrase = product.details?._catchphrase || `${product.name}. Reliable Power for Home & Factory.`;
+  // Gather all available product images
+  const images = [
+    product.image_url || '/diesel_generator_1.jpg',
+    product.details?._image2 as string,
+    product.details?._image3 as string,
+  ].filter(Boolean) as string[];
 
-  const mainImage = product.image_url || '/diesel_generator_1.jpg';
+  const [selectedImage, setSelectedImage] = useState(images[0] || '/diesel_generator_1.jpg');
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-amber-200">
-      <FakeSalesNotification />
-
-      {/* Promo Bar */}
-      <div className="bg-amber-600 text-white text-center py-2.5 px-4 text-xs sm:text-sm font-bold tracking-wide shadow-md relative z-10">
-        🔥 <span className="text-amber-100">LIMITED PROMO:</span> {product.name} now {priceDisplay} — Promo ends soon. Order before stock runs out!
-      </div>
-
-      {/* Header/Hero Section */}
-      <section className="bg-white border-b border-slate-200 pt-8 pb-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          
-          <div className="inline-flex items-center justify-center bg-amber-50 border border-amber-200 text-amber-700 px-5 py-1.5 rounded-full text-xs font-black tracking-widest uppercase mb-6">
-            {tagline}
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-4">
-            {catchphrase}
-          </h1>
-
-          <div className="flex justify-center mb-8">
-            <div className="bg-emerald-100 border border-emerald-200 text-emerald-800 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest flex items-center gap-2.5 shadow-sm transform hover:scale-105 transition-transform">
-              <Truck className="w-5 h-5 text-emerald-600" />
-              100% PAYMENT ON DELIVERY
-            </div>
-          </div>
-
-          {/* Product Images Gallery (No Slider) */}
-          <div className="max-w-2xl mx-auto mb-8 space-y-3 sm:space-y-4">
-            {/* Main Image */}
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-slate-100 aspect-square sm:aspect-video flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-tr from-slate-200 to-slate-100 animate-pulse -z-10"></div>
-              <img 
-                src={mainImage} 
-                alt={`${product.name} - Main View`}
-                className="object-cover w-full h-full hover:scale-110 transition-transform duration-700 ease-out cursor-crosshair"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://placehold.co/800x450/e2e8f0/475569?text=Product+Image+1';
-                }}
-              />
-            </div>
+      
+      {/* Product Presentation Section */}
+      <section className="bg-white border-b border-slate-200 py-10 md:py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             
-            {/* Additional Angles/Images */}
-            {(product.details?._image2 || product.details?._image3) && (
-              <div className="flex flex-col gap-3 sm:gap-4">
-                {product.details?._image2 && (
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-slate-100 aspect-square sm:aspect-video flex items-center justify-center">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-200 to-slate-100 animate-pulse -z-10"></div>
-                    <img 
-                      src={product.details._image2 as string} 
-                      alt={`${product.name} - View 2`} 
-                      className="object-cover w-full h-full hover:scale-110 transition-transform duration-700 ease-out cursor-crosshair"
-                    />
-                  </div>
-                )}
-                {product.details?._image3 && (
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-slate-100 aspect-square sm:aspect-video flex items-center justify-center">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-200 to-slate-100 animate-pulse -z-10"></div>
-                    <img 
-                      src={product.details._image3 as string} 
-                      alt={`${product.name} - View 3`} 
-                      className="object-cover w-full h-full hover:scale-110 transition-transform duration-700 ease-out cursor-crosshair"
-                    />
-                  </div>
-                )}
+            {/* Product Images Gallery */}
+            <div className="space-y-4">
+              <div className="relative rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-slate-100 aspect-square sm:aspect-[4/3] flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={selectedImage} 
+                  alt={product.name}
+                  className="object-cover w-full h-full transition-all duration-300"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://placehold.co/800x600/e2e8f0/475569?text=Product+Image';
+                  }}
+                />
               </div>
-            )}
-          </div>
 
-          <div className="text-[15px] sm:text-base text-slate-700 font-medium max-w-2xl mx-auto mb-8 leading-relaxed text-left bg-amber-50/50 p-6 sm:p-8 rounded-2xl border border-amber-100 shadow-sm">
-            {product.description ? (
-              <div className="whitespace-pre-wrap">
-                {product.description.includes('\n') 
-                  ? product.description 
-                  : product.description.replace(/(\s?\d+\.)/g, '\n\n$1').replace(/(▪️|•)/g, '\n  $1 ')}
-              </div>
-            ) : (
-              <p className="text-center">The <strong>{product.name}</strong> is a high-efficiency fairly used generator engineered to deliver maximum power and reliability for home, factory, and commercial use. Guaranteed to keep your operations running smoothly without compromise.</p>
-            )}
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-10">
-            <span className="bg-slate-100 border border-slate-200 text-slate-700 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-amber-600" /> High-Grade Quality
-            </span>
-            <span className="bg-slate-100 border border-slate-200 text-slate-700 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-amber-600" /> 1-Year Warranty
-            </span>
-            <span className="bg-slate-100 border border-slate-200 text-slate-700 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-amber-600" /> Easy to Operate
-            </span>
-            <span className="bg-slate-100 border border-slate-200 text-slate-700 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-amber-600" /> Fast Nationwide Delivery
-            </span>
-          </div>
-
-          <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 border-[3px] border-amber-500 relative">
-            <div className="absolute -top-4 -right-4 bg-amber-600 text-white text-[10px] font-black tracking-widest uppercase px-6 py-2 transform rotate-12 shadow-lg">
-              GET IT TODAY
+              {/* Thumbnails if multiple images exist */}
+              {images.length > 1 && (
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedImage(img)}
+                      className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
+                        selectedImage === img
+                          ? 'border-amber-500 ring-2 ring-amber-500/20'
+                          : 'border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={img} 
+                        alt={`${product.name} view ${idx + 1}`} 
+                        className="object-cover w-full h-full"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            
-            <a 
-              href="#order-form" 
-              className="block w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-lg font-black py-5 rounded-xl shadow-lg shadow-amber-500/40 transition-all transform hover:scale-105 active:scale-95"
-            >
-              🛒 ORDER NOW AT {priceDisplay} →
-              <span className="block text-[10px] font-bold opacity-90 mt-1 uppercase tracking-widest">
-                Pay on Delivery Available
-              </span>
-            </a>
-            
-            <p className="text-xs text-slate-500 mt-4 flex items-center justify-center gap-3 font-medium">
-              <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Secure Order</span>
-              <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5" /> Fast Delivery</span>
-            </p>
-          </div>
 
+            {/* Product Details */}
+            <div className="flex flex-col">
+              {/* Product Name */}
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-4 capitalize">
+                {product.name}
+              </h1>
+
+              {/* Product Price */}
+              <div className="text-3xl sm:text-4xl font-black text-amber-600 mb-6">
+                {priceDisplay}
+              </div>
+
+              {/* Payment Validates Order */}
+              <div className="mb-8">
+                <div className="inline-flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider shadow-sm">
+                  <Truck className="w-5 h-5 text-emerald-600 shrink-0" />
+                  Payment Validates Order
+                </div>
+              </div>
+
+              {/* Product Description */}
+              <div className="border-t border-slate-100 pt-6">
+                <h2 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-3">Product Description</h2>
+                <div className="text-slate-700 font-medium text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+                  {product.description || (
+                    <p>The <strong>{product.name}</strong> is a high-efficiency generator engineered to deliver maximum power and reliability for home, factory, and commercial use.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Order CTA Link */}
+              <div className="mt-8 pt-4">
+                <a 
+                  href="#order-form" 
+                  className="inline-flex items-center justify-center w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-black text-base px-8 py-4 rounded-xl shadow-md transition-all active:scale-95 uppercase tracking-wide cursor-pointer"
+                >
+                  Place Order Now ↓
+                </a>
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
 
-      {/* Urgency & Countdown Section */}
-      <section className="bg-slate-900 text-white py-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-          <h2 className="text-sm sm:text-base font-black tracking-widest uppercase text-white/90 mb-6">
-            🔥 Limited Time Promo — <span className="text-amber-400">Price Returns to {originalPriceDisplay} When This Ends</span>
-          </h2>
-          <CountdownTimer />
-        </div>
-      </section>
-
-      {/* Form Section */}
-      <section className="py-16 bg-white border-t border-slate-200 relative">
-        <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-slate-50 to-white"></div>
-        
-        <div className="max-w-4xl mx-auto px-4 relative z-10">
-          <div className="mb-10 text-center">
-            <h2 className="text-3xl font-black text-slate-900 mb-4">Ready to Secure Reliable Power?</h2>
-            <p className="text-slate-600 font-medium">Take advantage of the promo price before the timer runs out. Fill the form to place your order securely.</p>
-          </div>
-
+      {/* Order Form Section */}
+      <section id="order-form" className="py-14 bg-slate-50 border-t border-slate-200">
+        <div className="max-w-4xl mx-auto px-4">
           <OrderForm price={product.price} />
-        </div>
-      </section>
-
-      {/* Trust Badges */}
-      <section className="bg-amber-50 border-b border-amber-100 py-6">
-        <div className="max-w-5xl mx-auto px-4 flex flex-wrap justify-center items-center gap-x-8 gap-y-4">
-          <span className="flex items-center gap-2 text-sm font-bold text-slate-800">
-            <Award className="w-5 h-5 text-amber-600" /> Trusted by Contractors
-          </span>
-          <span className="flex items-center gap-2 text-sm font-bold text-slate-800">
-            <ShieldCheck className="w-5 h-5 text-amber-600" /> 1-Year Full Warranty
-          </span>
-          <span className="flex items-center gap-2 text-sm font-bold text-slate-800">
-            <Truck className="w-5 h-5 text-amber-600" /> Free Nationwide Delivery
-          </span>
-        </div>
-      </section>
-
-      {/* Why it Matters Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-10">
-            <span className="inline-block bg-amber-50 text-amber-600 px-5 py-1.5 rounded-full text-xs font-black tracking-widest uppercase mb-4">
-              Why Quality Generators Matter
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              Cheap Generators Break Down. Don't Risk Your Power Supply.
-            </h2>
-          </div>
-
-          <div className="bg-gradient-to-br from-slate-50 to-amber-50/50 border-l-4 border-amber-500 rounded-2xl p-6 sm:p-10 mb-12 shadow-sm relative text-slate-700 font-medium text-lg leading-relaxed">
-            <span className="absolute -top-6 left-6 text-7xl text-amber-200 font-serif leading-none">"</span>
-            <p className="relative z-10">
-              Every successful operation requires deep, reliable power. The <strong>{product.name}</strong> delivers consistent energy that <strong>saves you fuel, reduces downtime, and keeps your home or business running</strong> — avoiding the headache of sudden outages.
-            </p>
-            <p className="relative z-10 mt-4 text-slate-900 font-bold">
-              Power. Efficiency. Reliability — built into one machine that homes and factories across Nigeria depend on daily.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="bg-slate-900 rounded-2xl p-6 text-center text-white shadow-xl">
-              <div className="font-sans text-3xl font-black text-amber-400 mb-2">Powerful</div>
-              <div className="text-sm text-slate-300 font-medium">Consistent power delivery for heavy-duty appliances.</div>
-            </div>
-            <div className="bg-slate-900 rounded-2xl p-6 text-center text-white shadow-xl">
-              <div className="font-sans text-3xl font-black text-amber-400 mb-2">Efficient</div>
-              <div className="text-sm text-slate-300 font-medium">Saves fuel and operational costs over time.</div>
-            </div>
-            <div className="bg-slate-900 rounded-2xl p-6 text-center text-white shadow-xl">
-              <div className="font-sans text-3xl font-black text-amber-400 mb-2">Built</div>
-              <div className="text-sm text-slate-300 font-medium">To last through demanding industrial applications.</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Feature Grid */}
-      <section className="py-16 bg-slate-50 border-t border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <span className="inline-block bg-amber-100 text-amber-700 px-5 py-1.5 rounded-full text-xs font-black tracking-widest uppercase mb-4">
-              Get Constant Power
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Perfect For Every Environment
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white border-t-4 border-amber-500 rounded-2xl p-6 shadow-sm">
-              <div className="text-3xl mb-3">🏢</div>
-              <h4 className="font-bold text-slate-900 text-lg mb-2">Factories & Industries</h4>
-              <p className="text-sm text-slate-600">Power heavy machinery and ensure production never halts.</p>
-            </div>
-            <div className="bg-white border-t-4 border-amber-500 rounded-2xl p-6 shadow-sm">
-              <div className="text-3xl mb-3">🏡</div>
-              <h4 className="font-bold text-slate-900 text-lg mb-2">Residential Estates</h4>
-              <p className="text-sm text-slate-600">Provide whole-house backup power for large homes reliably.</p>
-            </div>
-            <div className="bg-white border-t-4 border-amber-500 rounded-2xl p-6 shadow-sm">
-              <div className="text-3xl mb-3">🌾</div>
-              <h4 className="font-bold text-slate-900 text-lg mb-2">Large Sites</h4>
-              <p className="text-sm text-slate-600">Protect investments with even, broad-spectrum application and heavy-duty performance.</p>
-            </div>
-          </div>
         </div>
       </section>
 
